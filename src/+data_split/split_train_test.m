@@ -10,18 +10,12 @@ function [train, test] = split_struct_train_test(EEG, tests_idx)
     [trials_to_test, trials_exist] = cellfun(@(x) extract_test_trials(events_sr, EEG.nbchan, x),t_idx,'un',0);
     bool_test_trials = trials_to_test{1,1}+trials_to_test{end,end};
     
-    train = pop_TBT(EEG,bool_test_trials,2,0.9,0);
-    train_sr = extractfield(train.event, "SR"); train_sr(train_sr==0) = [];
-    train.serials = train_sr;
-    train_labels = extractfield(train.event, "Class"); train_labels(train_labels==0) = [];
-    train.labels = train_labels;
+    train = pop_TBT(EEG,bool_test_trials,1,1,0);
+    train = stamp_eeg(train);
     train.etc.origin_all_trials = EEG.trials;
-    
-    test = pop_TBT(EEG,~bool_test_trials,2,0.9,0);
-    test_sr = extractfield(test.event, "SR"); test_sr(test_sr==0) = [];
-    test.serials = test_sr;
-    test_labels = extractfield(test.event, "Class"); test_labels(test_labels==0) = [];
-    test.labels = test_labels;
+    t = ~bool_test_trials;
+    test = pop_TBT(EEG,~bool_test_trials,1,1,0);
+    test = stamp_eeg(test);
     test.n8 = trials_exist{1,1}; test.n9 = trials_exist{end,end}; 
 end
 
