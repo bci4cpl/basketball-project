@@ -18,9 +18,9 @@ pipeline_input_dir = strcat(repo.data,CURRENT_VERSION);
 pipeline_input_cfg = Utils.OS.load_files(pipeline_input_dir, "ini");
 cfg = Utils.OS.ini2struct(pipeline_input_cfg);
 
-% check previous pipeline output
+% check previous saved data (if '.mat' file exist in folder)
 prev = Utils.OS.load_files(pipeline_input_dir, 'mat');
-
+%prev = []
 if isempty(prev) % there is no previous pipeline output, generate one
     % get all .set input files
     google_drive_input_dir = strcat(Utils.OS.get_current_user_dir(), "Google Drive",...
@@ -30,12 +30,17 @@ if isempty(prev) % there is no previous pipeline output, generate one
     input_set_files = Utils.OS.load_files(google_drive_input_dir, "set");
 
     eeglab
-    %eeg_array = cellfun(@(x) preprocess_pipeline(cfg, x, 0, ALLEEG, EEG),input_set_files,'un',0);
-    load(strcat(pipeline_input_dir,"\eeg_array.mat"))
+    eeg_array = cellfun(@(x) preprocess_pipeline(cfg, x, 0, ALLEEG, EEG),input_set_files,'un',0);
+    %load(strcat(pipeline_input_dir,"\eeg_array.mat"));
     test_idx_path = strcat(repo.src, "+data_split\test_idx.mat");
     [train_set, test_set] = data_split.split_train_test(eeg_array, test_idx_path);
+    data.train = train_set;
+    data.test = test_set;
+    save("data", "data");
+    clear test_set data;
 else
-    prev = load(prev);
-    
+    data = load(prev);
+    train_set = [data.data.train]; % load previous train set.
+    clear data;
 end
 
